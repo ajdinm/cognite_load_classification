@@ -1,14 +1,16 @@
 close all
 clear
 clc
-k = 5;  %Number of k-folds for feature selection algorithm
+k = 10;  %Number of k-folds for feature selection algorithm
 CritInclude=0.80;% Threshold will be set to 80% of maximum criterion
 PortionToHoldOut=0.3; %For hold out validation must be between 0 and 1
 %How many scenarios should be included in the classification?
 %Choose between HE, SW and CR or two or all three. Separate them using ;
-Scenario =['SW';'HE'];
-choice = false; %set to true to run the script with the implemented SVM as well
+Scenario =['SW';'CR';'HE'];
+FeatSel=false; %set to true to use feature selection (Can't use it if FeatChoice=2)
+choice = true; %set to true to run the script with the implemented SVM as well
 FeatChoice=0; %1=only physological signals, 2= only vehicle siganls, else all signals
+
 
 CurrentFolder = mfilename('fullpath');
 CurrentFolder=CurrentFolder(1:end-length(mfilename)); %remove file name
@@ -48,6 +50,11 @@ HRV = Shaibal_Features(Scenario,nrOfScenarios); %Adding HRV features which alrea
 %are normalized
 X=[X,HRV(:,:)];  
 
+if FeatChoice==2 && FeatSel==true
+    error('You cannot use feature selection on vehicle signals');
+end
+
+
 if FeatChoice==1
     %Physological signals 1,2,5,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27 + HRV
     X=X(:,[1,2,5,12:55]);
@@ -70,7 +77,7 @@ end
 [Train,Test]=HoldOutValid(Y, PortionToHoldOut);
 
 %Sequential Feature Selection
-if FeatChoice~=2
+if FeatSel==true
     [inmodel,history]=sequentialfs(@OptFeatures,X(Train,:),Y(Train),'cv',k,'direction','forward','nfeatures',15);
     threshold=max(history.Crit)-max(history.Crit)*(1-CritInclude);
     [~,indx]=find(inmodel==1);
@@ -87,9 +94,21 @@ training_labels1=Y(Train);
 validation_set1=X1(Test,:);
 validation_labels1=Y(Test);
 
+%Optimisation of the sigma and box paramaters
+CrossFoldData = cvpartition(length(training_labels1),'KFold',k);
+sigma = optimizableVariable('sigma',[1e-5,1e5],'Transform','log');
+box = optimizableVariable('box',[1e-5,1e5],'Transform','log');
+minfn = @(z)kfoldLoss(fitcsvm(training_set1,training_labels1,'CVPartition',CrossFoldData,...
+    'KernelFunction','rbf','BoxConstraint',z.box,'KernelScale',z.sigma));
+OptimisedParameters = bayesopt(minfn,[sigma,box],'IsObjectiveDeterministic',true,...
+    'AcquisitionFunctionName','expected-improvement-plus', 'verbose', 0, 'Plotfcn', []);
+
+OptSigma=OptimisedParameters.XAtMinObjective.sigma;
+OptBox=OptimisedParameters.XAtMinObjective.box;
+
+%Training of classifier
 SVM_Gaussian=fitcsvm(training_set1 ,training_labels1,'KernelFunction','rbf',...
-           'BoxConstraint',100,'KernelScale','auto','Standardize',true...
-           ,'Solver', 'L1QP');
+           'BoxConstraint',OptBox,'KernelScale',OptSigma,'Standardize',true);
 [Opt_Prediction, Opt_Score] = predict (SVM_Gaussian, validation_set1);
 
 %Implemented SVM

@@ -5,8 +5,8 @@ k = 10;  %Number of k-folds for feature selection algorithm
 CritInclude=0.85;% Threshold will be set to 80% of maximum criterion
 PortionToHoldOut=0.3; %For hold out validation must be between 0 and 1
 
-FeatSel=false; %set to true to use feature selection (Can't use it if FeatChoice=2)
-RunBasicSVM = true; %set to true to run the script with the basic implemented SVM as well
+FeatSel=true; %set to true to use feature selection (Can't use it if FeatChoice=2)
+RunBasicSVM = false; %set to true to run the script with the basic implemented SVM as well
 FeatChoice=0; %1=only physological signals, 2= only vehicle siganls, else all signals
 
 CurrentFolder = mfilename('fullpath');
@@ -134,6 +134,7 @@ for itr=1:7
 end
 
 %Evaluate the results from the classification
+%%
 if RunBasicSVM==true
     ImplResult=EvaluateClassification(Prediction, ImpScore, validation_labels2, 2);
 end

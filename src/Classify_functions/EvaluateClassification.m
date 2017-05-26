@@ -39,7 +39,7 @@ function [  ClassifyResult ] = EvaluateClassification(Prediction,Score, validati
 
             TPR(j,:)=TP(j,:)/(TP(j,:)+FN(j,:)); %True positive rate aka Sensitivity
             FPR(j,:)=FP(j,:)/(TN(j,:)+FP(j,:)); %False positive rate
-            Accuracy(j,:)=(TP+TN) / length(validation_labels{:,j};
+            Accuracy(j,:)=(TP(j,:)+TN(j,:)) / length(validation_labels{:,j});
      end
     AUC_score=round(AUC_score,2);
     TPR=round(TPR,2);
@@ -50,11 +50,9 @@ function [  ClassifyResult ] = EvaluateClassification(Prediction,Score, validati
     %Plotting
     hold on
     set(gcf, 'color', 'w');
-
-    
    
-    hFig=figure(figNr)
-    set(hFig, 'Position', [100 100 1250 500])
+    hFig=figure(figNr);
+    set(hFig, 'Position', [100 100 1250 500]);
     
     sub1 = subplot(1,2,1); %The combinations goes into this plot
     

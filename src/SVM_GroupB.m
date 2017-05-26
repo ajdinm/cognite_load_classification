@@ -2,7 +2,7 @@ close all
 clear
 clc
 k = 10;  %Number of k-folds for feature selection algorithm
-CritInclude=0.80;% Threshold will be set to 80% of maximum criterion
+CritInclude=0.85;% Threshold will be set to 80% of maximum criterion
 PortionToHoldOut=0.3; %For hold out validation must be between 0 and 1
 
 FeatSel=false; %set to true to use feature selection (Can't use it if FeatChoice=2)
@@ -83,12 +83,12 @@ for itr=1:7
 
     %Sequential Feature Selection
     if FeatSel==true
-        [inmodel,history]=sequentialfs(@OptFeatures,X(Train,:),Y(Train),'cv',k,'direction','forward','nfeatures',15);
+        [inmodel,history]=sequentialfs(@OptFeatures,X(Train,:),Y(Train),'cv',k,'direction','forward','nfeatures',20);
         threshold=max(history.Crit)-max(history.Crit)*(1-CritInclude);
         [~,indx]=find(inmodel==1);
         SelectedFeatures=indx(history.Crit > threshold);
         X1=X(:,SelectedFeatures(:,:));
-        NoFeatures=length(SelectedFeatures);
+        NoFeatures(itr)=length(SelectedFeatures);
     else
         X1=X; %No feature selection
     end
@@ -139,5 +139,3 @@ if RunBasicSVM==true
 end
 OptimisedResult=EvaluateClassification ( Opt_Prediction, Opt_Score, validation_labels1, 1);
 disp('done');
-
-

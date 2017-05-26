@@ -83,7 +83,7 @@ for itr=1:7
 
     %Sequential Feature Selection
     if FeatSel==true
-        [inmodel,history]=sequentialfs(@OptFeatures,X(Train,:),Y(Train),'cv',k,'direction','forward','nfeatures',20);
+        [inmodel,history]=sequentialfs(@OptFeatures,X(Train,:),Y(Train),'cv',k,'direction','forward','nfeatures',15);
         threshold=max(history.Crit)-max(history.Crit)*(1-CritInclude);
         [~,indx]=find(inmodel==1);
         SelectedFeatures=indx(history.Crit > threshold);
@@ -104,16 +104,16 @@ for itr=1:7
     sigma = optimizableVariable('sigma',[1e-5,1e5],'Transform','log');
     box = optimizableVariable('box',[1e-5,1e5],'Transform','log');
     minfn = @(z)kfoldLoss(fitcsvm(training_set1,training_labels1,'CVPartition',CrossFoldData,...
-        'KernelFunction','rbf','BoxConstraint',z.box,'KernelScale',z.sigma));
+        'KernelFunction','rbf','BoxConstraint',z.box,'KernelScale',z.sigma,'Standardize',true));
     OptimisedParameters = bayesopt(minfn,[sigma,box],'IsObjectiveDeterministic',true,...
         'AcquisitionFunctionName','expected-improvement-plus', 'verbose', 0, 'Plotfcn', []);
 
-    OptSigma=OptimisedParameters.XAtMinObjective.sigma;
-    OptBox=OptimisedParameters.XAtMinObjective.box;
+    OptSigma(itr)=OptimisedParameters.XAtMinObjective.sigma;
+    OptBox(itr)=OptimisedParameters.XAtMinObjective.box;
 
     %Training of classifier
     SVM_Gaussian=fitcsvm(training_set1 ,training_labels1,'KernelFunction','rbf',...
-               'BoxConstraint',OptBox,'KernelScale',OptSigma,'Standardize',true);
+               'BoxConstraint',OptBox(itr),'KernelScale',OptSigma(itr),'Standardize',true);
     [Opt_Prediction{:,itr}, tempscore] = predict (SVM_Gaussian, validation_set1);
     Opt_Score{:,itr}=tempscore(:,2);
     %Basic Implemented SVM
@@ -134,7 +134,7 @@ for itr=1:7
 end
 
 %Evaluate the results from the classification
-%%
+
 if RunBasicSVM==true
     ImplResult=EvaluateClassification(Prediction, ImpScore, validation_labels2, 2);
 end

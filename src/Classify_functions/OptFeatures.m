@@ -1,7 +1,7 @@
 function [ criterion ] = OptFeatures(training_set,training_labels,validation_set,validation_labels)
 
 model = fitcsvm(training_set, training_labels,'KernelFunction', 'rbf'...
-    ,'Standardize', true, 'KernelScale','auto','BoxConstraint',100);
+    ,'Standardize', true, 'KernelScale','auto','BoxConstraint',10000);
 
 criterion = sum(predict (model, validation_set)~=validation_labels);
 

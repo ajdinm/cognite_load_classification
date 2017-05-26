@@ -85,10 +85,10 @@ validation_labels=Y(Test);
         Random_Forest_Prediction=str2double(Random_Forest_Prediction);
         [Naive_Bayes_Prediction, Naive_Bayes_Score] = predict (Naive_Bayes, validation_set);
 
- Result(1).Linear= EvaluateClassification ( Linear_Prediction, Linear_Score(:,2),validation_labels,1);
- Result(2).Polynomial= EvaluateClassification ( Poly_Prediction,Poly_Score(:,2), validation_labels,2);
- Result(3).Gaussian=EvaluateClassification ( Gauss_Prediction, Gauss_Score(:,2), validation_labels, 3);
- Result(4).RandomForest= EvaluateClassification ( Random_Forest_Prediction,Random_Forest_Score(:,2), validation_labels,4);
- Result(5).NaiveBayes= EvaluateClassification ( Naive_Bayes_Prediction,Naive_Bayes_Score(:,2), validation_labels,5);
+        Prediction=[Gauss_Prediction, Poly_Prediction, Linear_Prediction,Random_Forest_Prediction,Naive_Bayes_Prediction];
+        Scores=[Gauss_Score(:,2), Poly_Score(:,2), Linear_Score(:,2), Random_Forest_Score(:,2), Naive_Bayes_Score(:,2)];
+        Result=EvaluateClassifiers (Prediction, Scores, validation_labels);
+        
+
 
 

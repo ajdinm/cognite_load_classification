@@ -1,26 +1,30 @@
 close all
 clear
 clc
-k = 10;  %Number of k-folds for feature selection algorithm
+k = 10;  %Number of k-folds for feature selection algorithm and optimisation
 CritInclude=0.85;% Threshold will be set to 80% of maximum criterion
 PortionToHoldOut=0.3; %For hold out validation must be between 0 and 1
 
 FeatSel=true; %set to true to use feature selection (Can't use it if FeatChoice=2)
 RunBasicSVM = false; %set to true to run the script with the basic implemented SVM as well
-FeatChoice=0; %1=only physological signals, 2= only vehicle siganls, else all signals
-
+FeatChoice=1; %1=only physological signals, 2= only vehicle siganls, else all signals
+if FeatChoice == 1 || FeatChoice==2
+    combinations = 3;
+else
+    combinations=7;
+end
 CurrentFolder = mfilename('fullpath');
 CurrentFolder=CurrentFolder(1:end-length(mfilename)); %remove file name
 addpath(genpath(CurrentFolder));
 FeatAdd='ExtractedFeatures_';
 %preallocation of some cell variables
-validation_labels1=cell(1,7);
-Opt_Prediction=cell(1,7);
-Prediction=cell(1,7);
-validation_labels2=cell(1,7);
-ImpScore=cell(1,7);
-for itr=1:7
-    Scenario=combo(itr);
+validation_labels1=cell(1,combinations);
+Opt_Prediction=cell(1,combinations);
+Prediction=cell(1,combinations);
+validation_labels2=cell(1,combinations);
+ImpScore=cell(1,combinations);
+for itr=1:combinations
+    Scenario=combo(itr,combinations);
     [nrOfScenarios,~]=size(Scenario);
     X=[];
 
@@ -136,7 +140,8 @@ end
 %Evaluate the results from the classification
 
 if RunBasicSVM==true
-    ImplResult=EvaluateClassification(Prediction, ImpScore, validation_labels2, 2);
+    ImplResult=EvaluateClassification(Prediction, ImpScore, validation_labels2, 2,combinations);
 end
-OptimisedResult=EvaluateClassification ( Opt_Prediction, Opt_Score, validation_labels1, 1);
+
+OptimisedResult=EvaluateClassification ( Opt_Prediction, Opt_Score, validation_labels1, 1, combinations);
 disp('done');

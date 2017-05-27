@@ -1,8 +1,8 @@
-function [  ClassifyResult ] = EvaluateClassification(Prediction,Score, validation_labels, figNr)
+function [  ClassifyResult ] = EvaluateClassification(Prediction,Score, validation_labels, figNr,combinations)
 
-        X_score=cell(1,7);
-        Y_score=cell(1,7);
-    for j = 1:7
+        X_score=cell(1,combinations);
+        Y_score=cell(1,combinations);
+    for j = 1:combinations
         Score{:,j}=double(Score{:,j});
         [X_score{1,j},Y_score{1,j},~,AUC_score(j,:)] = perfcurve(validation_labels{:,j},Score{:,j},1);
 
@@ -47,7 +47,8 @@ function [  ClassifyResult ] = EvaluateClassification(Prediction,Score, validati
     ClassifyResult=table(AUC_score, TP, FP, TN, FN, TPR, FPR, Accuracy);
     AUC_score=num2str(AUC_score);
     
-    %Plotting
+    %Plotting for 7 combonations
+    if combinations==7
     hold on
     set(gcf, 'color', 'w');
    
@@ -73,4 +74,20 @@ function [  ClassifyResult ] = EvaluateClassification(Prediction,Score, validati
     str={'Receiver Operating Characteristic curve for', titleName};
     suptitle(str);
     hold off
+    else
+        hold on
+    set(gcf, 'color', 'w');
+   
+    hFig=figure(figNr);
+    set(hFig, 'Position', [100 100 600 500]);
+        plot(X_score{1,1}, Y_score{1,1},X_score{1,2}, Y_score{1,2},X_score{1,3},...
+        Y_score{1,3});
+    xlabel('False Positive Rate');
+    ylabel('True Positive Rate');
+     legend(['CR   AUC=' AUC_score(1,:)], ['HE   AUC=' AUC_score(2,:)]...
+        ,['SW  AUC=' AUC_score(3,:)]); 
+    str = {'Reciver Operating Characteristic curve using only', 'Physiological Signals'}';
+    title(str)
+    
+    end
 end

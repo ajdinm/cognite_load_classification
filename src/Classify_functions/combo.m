@@ -1,4 +1,7 @@
-function scenario = combo(itr)
+function scenario = combo(itr, combinations)
+    if combinations == 3
+        itr=itr+4;
+    end
     switch itr
         case 1
             scenario = ['SW';'CR';'HE'];

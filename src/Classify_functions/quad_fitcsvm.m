@@ -10,8 +10,8 @@ f = zeros(p+1, 1);
 
 A = -[diag(y)*x y];
 bb = -ones(n, 1);
-
-w = quadprog(H, f, A, bb);
+options = optimoptions('quadprog','Display','off');
+w = quadprog(H, f, A, bb,[],[],[],[],[], options);
 b = w(end);
 w = w(1:end-1);
 

@@ -2,14 +2,14 @@ close all
 clear
 clc
 %Using the features extracted with FeatureExtraction scirpt to compare
-%5 different classifiers, holdout validation is employed in order to
-%create a validation set. The classifiers are evaluated according to their
+%5 different classifiers, holdout validation is employed to create a
+%training and a validation set. The classifiers are evaluated according to their
 %ROC curve which will be plotted to you along with the AUC result.
 
 PortionToHoldOut=0.3; %For hold out validation must be between 0 and 1
 %How many events should be included in the classification?
 %Choose between HE, SW and CR or two of them or all three.
-Scenario =['SW';'CR';'HE'];
+Scenario =['SW';'HE';'CR'];
 
 CurrentFolder = mfilename('fullpath');
 CurrentFolder=CurrentFolder(1:end-(length(mfilename))); %remove file name
@@ -71,9 +71,9 @@ validation_labels=Y(Test);
 SVM_Gaussian=fitcsvm(training_set ,training_labels,'KernelFunction','rbf',...
     'BoxConstraint',1000,'KernelScale','auto','Standardize',true);
 SVM_Polynomial = fitcsvm(training_set, training_labels,'KernelFunction',...
-    'polynomial', 'BoxConstraint',10, 'KernelScale','auto', 'Standardize', true);
+    'polynomial', 'BoxConstraint',1000, 'KernelScale','auto', 'Standardize', true);
 SVM_Linear  = fitcsvm(training_set, training_labels,'KernelFunction', 'linear',...
-    'BoxConstraint',10,'KernelScale','auto','Standardize', true);
+    'BoxConstraint',10000,'KernelScale','auto','Standardize', true);
 Random_Forest = TreeBagger(20, training_set, training_labels, ...
     'OOBPrediction','on');
 Naive_Bayes = fitcnb(training_set, training_labels);
@@ -84,7 +84,7 @@ Naive_Bayes = fitcnb(training_set, training_labels);
 [Random_Forest_Prediction,Random_Forest_Score] = predict (Random_Forest, validation_set);
 Random_Forest_Prediction=str2double(Random_Forest_Prediction);
 [Naive_Bayes_Prediction, Naive_Bayes_Score] = predict (Naive_Bayes, validation_set);
-
+%%
 Prediction=[Gauss_Prediction, Poly_Prediction, Linear_Prediction,Random_Forest_Prediction,Naive_Bayes_Prediction];
 Scores=[Gauss_Score(:,2), Poly_Score(:,2), Linear_Score(:,2), Random_Forest_Score(:,2), Naive_Bayes_Score(:,2)];
 Result=EvaluateClassifiers (Prediction, Scores, validation_labels);

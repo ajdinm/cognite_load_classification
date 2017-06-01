@@ -30,9 +30,17 @@ for j = 1:size(Prediction,2)
     TPR(j)=TP(j)/(TP(j)+FN(j)); %True positive rate aka Sensitivity
     FPR(j)=FP(j)/(TN(j)+FP(j)); %False positive rate
 end
-
-ClassifyResult=table(AUC_score, TP, FP, TN, FN, TPR, FPR, Accuracy);
-AUC=num2str(AUC_score');
+AUC_score=AUC_score';
+TP=TP';
+FP=FP';
+TN=TN';
+FN=FN';
+TPR=TPR';
+FPR=FPR';
+Accuracy=Accuracy';
+Classifier={'Linear Kernel'; 'Polynomial Kernel'; 'Gaussian Kernel'; 'Random Forest'; 'Naive Bayes'};
+ClassifyResult=table(AUC_score, TP, FP, TN, FN, TPR, FPR, Accuracy, 'RowNames',Classifier);
+AUC=num2str(AUC_score);
 set(gcf, 'color', 'w');
 figure(1)
 plot(X_score{1,1}, Y_score{1,1}, X_score{1,2}, Y_score{1,2}, X_score{1,3},...
@@ -40,8 +48,8 @@ plot(X_score{1,1}, Y_score{1,1}, X_score{1,2}, Y_score{1,2}, X_score{1,3},...
 xlabel('False Positive Rate');
 ylabel('True Positive Rate');
 title('Receiver Operating Characteristic curve for different classifiers');
-legend(['SVM Gaussian Kernel, AUC=' AUC(3,:)], ['SVM Polynomial Kernel, AUC=', AUC(2,:)], ...
-    ['SVM Linear Kernel, AUC=',AUC(1,:)], ['Random Forest, AUC=',AUC(4,:)],...
+legend(['SVM Linear Kernel, AUC=' AUC(1,:)], ['SVM Polynomial Kernel, AUC=', AUC(2,:)], ...
+    ['SVM Gaussian Kernel, AUC=',AUC(3,:)], ['Random Forest, AUC=',AUC(4,:)],...
     ['Naive Bayes, AUC=', AUC(5,:)]);
 
 end

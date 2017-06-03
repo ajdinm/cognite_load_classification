@@ -11,6 +11,8 @@ function [  ClassifyResult ] = EvaluateClassification(Prediction,Score, validati
         switch(figNr)
             case 1
                 titleName='Toolbox Support Vector Machine with Gaussian kernel';
+            case 2
+                titleName='Toolbox Support Vector Machine with Linear kernel';
             otherwise 
                 titleName='Implemented Support Vector Machine with Gaussian Kernel';
         end
@@ -86,7 +88,7 @@ function [  ClassifyResult ] = EvaluateClassification(Prediction,Score, validati
     ylabel('True Positive Rate');
      legend(['CR   AUC=' AUC_score(1,:)], ['HE   AUC=' AUC_score(2,:)]...
         ,['SW  AUC=' AUC_score(3,:)]); 
-    str = {'Reciver Operating Characteristic curve using only', 'Physiological Signals'}';
+    str = {titleName 'using only Physiological Signals'}';
     title(str)
     
     end

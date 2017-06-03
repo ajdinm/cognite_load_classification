@@ -84,7 +84,7 @@ Naive_Bayes = fitcnb(training_set, training_labels);
 [Random_Forest_Prediction,Random_Forest_Score] = predict (Random_Forest, validation_set);
 Random_Forest_Prediction=str2double(Random_Forest_Prediction);
 [Naive_Bayes_Prediction, Naive_Bayes_Score] = predict (Naive_Bayes, validation_set);
-%%
+
 Prediction=[Gauss_Prediction, Poly_Prediction, Linear_Prediction,Random_Forest_Prediction,Naive_Bayes_Prediction];
 Scores=[Gauss_Score(:,2), Poly_Score(:,2), Linear_Score(:,2), Random_Forest_Score(:,2), Naive_Bayes_Score(:,2)];
 Result=EvaluateClassifiers (Prediction, Scores, validation_labels);

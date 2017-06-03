@@ -1,13 +1,14 @@
 close all
 clear
 clc
-k = 10;  %Number of k-folds for feature selection algorithm and optimisation
-nrOfFeat=30;
+k = 5;  %Number of k-folds for feature selection algorithm and optimisation
+nrOfFeat=20;
 CritInclude=0.85;% Threshold will be set to 85% of maximum criterion
 PortionToHoldOut=0.3; %For hold out validation must be between 0 and 1
-FeatSel=false; %set to true to use feature selection (Can't use it if FeatChoice=2)
-RunBasicSVM = true; %set to true to run the script with the basic implemented SVM as well
-FeatChoice=0; %1=only physological signals, 2= only vehicle siganls, else all signals
+FeatSel=true; %set to true to use feature selection (Can't use it if FeatChoice=2)
+runLin=true; % run it with linear kernel as well, won't work if RunBasicSVM=true.
+RunBasicSVM = false; %set to true to run the script with the basic implemented SVM as well
+FeatChoice=1; %1=only physological signals, 2= only vehicle siganls, else all signals
 
 if FeatChoice == 1 || FeatChoice==2
     combinations = 3;
@@ -21,9 +22,13 @@ FeatAdd='ExtractedFeatures_';
 %preallocation of some cell variables
 validation_labels1=cell(1,combinations);
 Opt_Prediction=cell(1,combinations);
+Opt_Score=cell(1,combinations);
 Prediction=cell(1,combinations);
 validation_labels2=cell(1,combinations);
 ImpScore=cell(1,combinations);
+Lin_Prediction=cell(1, combinations);
+Lin_Score=cell(1,combinations);
+
 for itr=1:combinations
     Scenario=combo(itr,combinations);
     [nrOfScenarios,~]=size(Scenario);
@@ -55,7 +60,7 @@ for itr=1:combinations
     for i=1:size(X,2)
         X(:,i)=Normalization_Features(X(:,i));
     end
-
+    
     HRV = Shaibal_Features(Scenario,nrOfScenarios); %Adding HRV features which already
     %are normalized
     X=[X,HRV(:,:)];  
@@ -63,8 +68,9 @@ for itr=1:combinations
     if FeatChoice==2 && FeatSel==true
         error('You cannot use feature selection on vehicle signals');
     end
-
-
+    if runLin == true && RunBasicSVM == true
+        error('You cannot run both the Linear kernel and the basic implemented one');
+    end 
     if FeatChoice==1
         %Physological signals 1,2,5,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27 + HRV
         X=X(:,[1,2,5,12:55]);
@@ -88,12 +94,8 @@ for itr=1:combinations
 
     %Sequential Feature Selection
     if FeatSel==true
-        [inmodel,history]=sequentialfs(@OptFeatures,X(Train,:),Y(Train),'cv',k,'direction','forward','nfeatures',nrOfFeat);
-        threshold=max(history.Crit)-max(history.Crit)*(1-CritInclude);
-        [~,indx]=find(inmodel==1);
-        SelectedFeatures=indx(history.Crit > threshold);
-        X1=X(:,SelectedFeatures(:,:));
-        NoFeatures(itr)=length(SelectedFeatures);
+    [X1, NoFeatures(itr), NoVehFeat(itr), NoPhysFeat(itr)]=Feat_Selection(X(Train,:),...
+        Y(Train,:),k,nrOfFeat, CritInclude,X);
     else
         X1=X; %No feature selection
     end
@@ -104,23 +106,10 @@ for itr=1:combinations
     validation_set1=X1(Test,:);
     validation_labels1{:,itr}=Y(Test);
 
-    %Optimisation of the sigma and box paramaters
-    CrossFoldData = cvpartition(length(training_labels1),'KFold',k);
-    sigma = optimizableVariable('sigma',[1e-5,1e5],'Transform','log');
-    box = optimizableVariable('box',[1e-5,1e5],'Transform','log');
-    minfn = @(z)kfoldLoss(fitcsvm(training_set1,training_labels1,'CVPartition',CrossFoldData,...
-        'KernelFunction','rbf','BoxConstraint',z.box,'KernelScale',z.sigma,'Standardize',true));
-    OptimisedParameters = bayesopt(minfn,[sigma,box],'IsObjectiveDeterministic',true,...
-        'AcquisitionFunctionName','expected-improvement-plus', 'verbose', 0, 'Plotfcn', []);
-
-    OptSigma(itr)=OptimisedParameters.XAtMinObjective.sigma;
-    OptBox(itr)=OptimisedParameters.XAtMinObjective.box;
-
-    %Training of classifier
-    SVM_Gaussian=fitcsvm(training_set1 ,training_labels1,'KernelFunction','rbf',...
-               'BoxConstraint',OptBox(itr),'KernelScale',OptSigma(itr),'Standardize',true);
-    [Opt_Prediction{:,itr}, tempscore] = predict (SVM_Gaussian, validation_set1);
-    Opt_Score{:,itr}=tempscore(:,2);
+    [Opt_Prediction{:,itr}, Opt_Score{:,itr}]=Opt_SVM(training_set1, training_labels1, k, validation_set1);
+    if runLin==true
+    [Lin_Prediction{:,itr}, Lin_Score{:,itr}]=OptLin_SVM(training_set1, training_labels1, k, validation_set1);
+    end
     %Basic Implemented SVM
     if RunBasicSVM == true
         sigma=0.25;
@@ -141,8 +130,11 @@ end
 %Evaluate the results from the classification
 
 if RunBasicSVM==true
-    ImplResult=EvaluateClassification(Prediction, ImpScore, validation_labels2, 2,combinations);
+    ImplResult=EvaluateClassification(Prediction, ImpScore, validation_labels2, 3,combinations);
+elseif runLin==true
+     LinResult=EvaluateClassification ( Lin_Prediction, Lin_Score, validation_labels1, 2, combinations);
 end
-
 OptimisedResult=EvaluateClassification ( Opt_Prediction, Opt_Score, validation_labels1, 1, combinations);
+
+
 disp('done');
